@@ -7,6 +7,10 @@
 # appboy-python-client
 A Python client for the Appboy REST API
 
+[ ![Codeship build](https://codeship.com/projects/d92ace70-056d-0134-ffb9-566313bcba78/status?branch=master)](https://codeship.com/projects/154416)
+### Owner
+[Alexander Zhilyaev](mailto:azh@hellofresh.com)
+
 ### How to install
 
 Make sure you have Python 2.7.11+ installed and run:
