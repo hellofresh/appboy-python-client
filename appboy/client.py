@@ -31,6 +31,7 @@ class AppboyClient(object):
     API_URL = 'https://api.appboy.com'
 
     USER_TRACK_ENDPOINT = '/users/track'
+    USER_DELETE_ENDPOINT = '/users/delete'
 
     REQUEST_POST = 'post'
 
@@ -60,6 +61,25 @@ class AppboyClient(object):
 
         if purchases:
             payload['purchases'] = purchases
+
+        return self.__create_request(payload=payload, request_type=self.REQUEST_POST)
+
+    def user_delete(self, external_ids, appboy_ids):
+        """
+        Delete user from appboy.
+        :param external_ids: dict or list of user external ids
+        :param appboy_ids: dict or list of user appboy ids
+        :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
+        """
+        self.request_url = self.API_URL + self.USER_DELETE_ENDPOINT
+
+        payload = {}
+
+        if external_ids:
+            payload['external_ids'] = external_ids
+
+        if appboy_ids:
+            payload['appboy_ids'] = appboy_ids
 
         return self.__create_request(payload=payload, request_type=self.REQUEST_POST)
 
