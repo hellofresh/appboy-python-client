@@ -102,10 +102,10 @@ class AppboyClient(object):
 
         except RequestException as e:
             # handle all requests HTTP exceptions
-            response = {'client_error': e.message}
+            response = {'client_error': str(e)}
         except Exception as e:
             # handle all exceptions which can be on API side
-            response = {'client_error': (e.message + '. Response: ' + r.text)}
+            response = {'client_error': (str(e) + '. Response: ' + r.text)}
 
         if 'success' not in response:
             response['success'] = False

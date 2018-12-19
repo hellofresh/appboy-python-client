@@ -17,11 +17,11 @@ r = client.user_track(
 )
 if r['success']:
     # do our magic here
-    print 'Success!'
-    print r
+    print('Success!')
+    print(r)
 else:
-    print r['client_error']
-    print r['errors']
+    print(r['client_error'])
+    print(r['errors'])
 
 # For delete users by external_id or appboy_id
 r = client.user_delete(
@@ -30,8 +30,8 @@ r = client.user_delete(
 )
 if r['success']:
     # do our magic here
-    print 'Success!'
-    print r
+    print('Success!')
+    print(r)
 else:
-    print r['client_error']
-    print r['errors']
+    print(r['client_error'])
+    print(r['errors'])
