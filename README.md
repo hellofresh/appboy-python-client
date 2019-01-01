@@ -26,7 +26,7 @@ $ python setup.py install
 ```python
 from appboy.client import AppboyClient
 
-client = AppboyClient(app_group_id='YOUR_GROUP_ID')
+client = AppboyClient(api_key='YOUR_API_KEY')
 
 r = client.user_track(
     attributes=[{
@@ -53,6 +53,6 @@ For more examples, check `examples.py`.
 
 ### How to test
 
-To run the unit tests, make sure you have the [nose](http://nose.readthedocs.org/) module instaled and run the following from the repository root directory:
+To run the unit tests, make sure you have the [tox](https://tox.readthedocs.io/en/latest/) module installed and run the following from the repository root directory:
 
-`$ nosetests`
+`$ tox`
