@@ -32,10 +32,10 @@ class DummyRequestException(object):
 
 class TestAppboyClient(unittest.TestCase):
     def setUp(self):
-        self.client = AppboyClient(app_group_id='APP_GROUP_ID')
+        self.client = AppboyClient(api_key='API_KEY')
 
     def test_init(self):
-        self.assertEqual(self.client.app_group_id, 'APP_GROUP_ID')
+        self.assertEqual(self.client.api_key, 'API_KEY')
         self.assertIsNotNone(self.client.requests)
         self.assertEqual(self.client.request_url, '')
         self.assertEqual(self.client.headers, {})
@@ -59,7 +59,7 @@ class TestAppboyClient(unittest.TestCase):
 
         response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
 
-        self.assertEqual('https://api.appboy.com/users/track', self.client.request_url)
+        self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
         self.assertEqual(self.client.headers['Content-Type'], 'application/json')
 
         self.assertEqual(response['status_code'], 200)
@@ -86,7 +86,7 @@ class TestAppboyClient(unittest.TestCase):
 
         response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
 
-        self.assertEqual('https://api.appboy.com/users/track', self.client.request_url)
+        self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
         self.assertEqual(self.client.headers['Content-Type'], 'application/json')
 
         self.assertEqual(response['status_code'], 0)

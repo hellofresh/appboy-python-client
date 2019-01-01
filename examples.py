@@ -1,6 +1,6 @@
 from appboy.client import AppboyClient
 
-client = AppboyClient(app_group_id='YOUR_GROUP_ID')
+client = AppboyClient(api_key='YOUR_API_KEY')
 
 # For create - update users
 r = client.user_track(
