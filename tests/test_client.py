@@ -2,7 +2,7 @@ import unittest
 
 from requests import RequestException
 
-from appboy.client import AppboyClient
+from braze.client import BrazeClient
 
 
 class DummyRequest(object):
@@ -32,7 +32,7 @@ class DummyRequestException(object):
 
 class TestAppboyClient(unittest.TestCase):
     def setUp(self):
-        self.client = AppboyClient(api_key='API_KEY')
+        self.client = BrazeClient(app_group_id='APP_GROUP_ID')
 
     def test_init(self):
         self.assertEqual(self.client.api_key, 'API_KEY')
@@ -58,7 +58,6 @@ class TestAppboyClient(unittest.TestCase):
         }
 
         response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
-
         self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
         self.assertEqual(self.client.headers['Content-Type'], 'application/json')
 
@@ -85,7 +84,6 @@ class TestAppboyClient(unittest.TestCase):
         }
 
         response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
-
         self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
         self.assertEqual(self.client.headers['Content-Type'], 'application/json')
 
