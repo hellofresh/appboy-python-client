@@ -58,7 +58,7 @@ class TestAppboyClient(unittest.TestCase):
         }
 
         response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
-        self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
+        self.assertEqual(self.client.api_url + '/users/track', self.client.request_url)
         self.assertEqual(self.client.headers['Content-Type'], 'application/json')
 
         self.assertEqual(response['status_code'], 200)
@@ -84,7 +84,7 @@ class TestAppboyClient(unittest.TestCase):
         }
 
         response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
-        self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
+        self.assertEqual(self.client.api_url + '/users/track', self.client.request_url)
         self.assertEqual(self.client.headers['Content-Type'], 'application/json')
 
         self.assertEqual(response['status_code'], 0)

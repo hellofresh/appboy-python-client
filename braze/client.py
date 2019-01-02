@@ -28,15 +28,15 @@ class BrazeClient(object):
         print r['client_error']
         print r['errors']
     """
-    API_URL = 'https://api.appboy.com'
-
+    DEFAULT_API_URL = 'https://api.appboy.com'
     USER_TRACK_ENDPOINT = '/users/track'
     USER_DELETE_ENDPOINT = '/users/delete'
 
     REQUEST_POST = 'post'
 
-    def __init__(self, api_key):
+    def __init__(self, api_key, api_url=None):
         self.api_key = api_key
+        self.api_url = api_url or self.DEFAULT_API_URL
         self.requests = requests
         self.request_url = ''
         self.headers = {}
@@ -49,7 +49,7 @@ class BrazeClient(object):
         :param purchases: dict or list of user purchases dict (external_id, app_id, product_id, currency, price)
         :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
         """
-        self.request_url = self.API_URL + self.USER_TRACK_ENDPOINT
+        self.request_url = self.api_url + self.USER_TRACK_ENDPOINT
 
         payload = {}
 
@@ -71,7 +71,7 @@ class BrazeClient(object):
         :param appboy_ids: dict or list of user braze ids
         :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
         """
-        self.request_url = self.API_URL + self.USER_DELETE_ENDPOINT
+        self.request_url = self.api_url + self.USER_DELETE_ENDPOINT
 
         payload = {}
 
