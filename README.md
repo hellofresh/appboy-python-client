@@ -1,5 +1,5 @@
 # braze-client
-A Python client for the Appboy REST API
+A Python client for the Braze REST API
 
 ### How to install
 
@@ -14,8 +14,8 @@ $ python setup.py install
 ### How to use
 
 ```python
-from braze import BrazeClient
-client = BrazeClient(app_group_id='YOUR_GROUP_ID')
+from braze.client import BrazeClient
+client = BrazeClient(api_key='YOUR_GROUP_ID')
 
 r = client.user_track(
     attributes=[{

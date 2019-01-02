@@ -9,7 +9,7 @@ class BrazeClient(object):
     Client for Appboy public API. Support user_track.
     usage:
      from braze.client import BrazeClient
-     client = BrazeClient(app_group_id='Place your app_group_id here')
+     client = BrazeClient(api_key='Place your API key here')
      r = client.user_track(
             attributes=[{
                 'external_id': '1',
@@ -28,7 +28,7 @@ class BrazeClient(object):
         print r['client_error']
         print r['errors']
     """
-    API_URL = 'https://api.braze.com'
+    API_URL = 'https://api.appboy.com'
 
     USER_TRACK_ENDPOINT = '/users/track'
     USER_DELETE_ENDPOINT = '/users/delete'

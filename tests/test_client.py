@@ -32,7 +32,7 @@ class DummyRequestException(object):
 
 class TestAppboyClient(unittest.TestCase):
     def setUp(self):
-        self.client = BrazeClient(app_group_id='APP_GROUP_ID')
+        self.client = BrazeClient(api_key='APP_GROUP_ID')
 
     def test_init(self):
         self.assertEqual(self.client.api_key, 'API_KEY')
