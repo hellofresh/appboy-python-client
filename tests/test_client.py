@@ -35,7 +35,7 @@ class TestBrazeClient(object):
         assert braze_client.headers == {}
 
     def test_user_track(self, braze_client):
-        self.client.requests = DummyRequest()
+        braze_client.requests = DummyRequest()
         attributes = {
             'external_id': '123',
             'first_name': 'Firstname',
@@ -64,7 +64,7 @@ class TestBrazeClient(object):
         assert response['message'] == 'success'
 
     def test_user_track_request_exception(self, braze_client):
-        self.client.requests = DummyRequestException()
+        braze_client.requests = DummyRequestException()
         attributes = {
             'external_id': '123',
             'first_name': 'Firstname',
