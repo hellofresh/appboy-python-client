@@ -60,3 +60,10 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Virtualenv
+.pyenv/
+.venv/
+.py2/
+.py3/
+

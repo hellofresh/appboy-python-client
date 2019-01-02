@@ -35,8 +35,8 @@ class AppboyClient(object):
 
     REQUEST_POST = 'post'
 
-    def __init__(self, app_group_id):
-        self.app_group_id = app_group_id
+    def __init__(self, api_key):
+        self.api_key = api_key
         self.requests = requests
         self.request_url = ''
         self.headers = {}
@@ -88,7 +88,7 @@ class AppboyClient(object):
             'Content-Type': 'application/json',
         }
 
-        payload['app_group_id'] = self.app_group_id
+        payload['api_key'] = self.api_key
 
         response = {}
 
