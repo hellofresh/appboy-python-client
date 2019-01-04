@@ -1,6 +1,6 @@
 from braze.client import BrazeClient
 
-client = BrazeClient(api_key='YOUR_GROUP_ID')
+client = BrazeClient(api_key='YOUR_API_KEY')
 
 # For create - update users
 r = client.user_track(

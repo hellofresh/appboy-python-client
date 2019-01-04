@@ -28,7 +28,7 @@ class BrazeClient(object):
         print r['client_error']
         print r['errors']
     """
-    DEFAULT_API_URL = 'https://api.appboy.com'
+    DEFAULT_API_URL = 'https://rest.iad-02.braze.com'
     USER_TRACK_ENDPOINT = '/users/track'
     USER_DELETE_ENDPOINT = '/users/delete'
 
