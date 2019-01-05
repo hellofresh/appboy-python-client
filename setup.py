@@ -5,6 +5,7 @@ VERSION = "0.0.1"
 
 REQUIRES = [
     'requests==2.21.0',
+    'tenacity==5.0.2',
 ]
 
 EXTRAS = {

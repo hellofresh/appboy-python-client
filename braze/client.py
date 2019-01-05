@@ -1,7 +1,18 @@
 import json
-import requests
 
+import requests
 from requests.exceptions import RequestException
+from tenacity import retry
+from tenacity import stop_after_attempt
+from tenacity import wait_random_exponential
+
+
+class BrazeRateLimitError(object):
+    raise Exception('BrazeRateLimitError')
+
+
+class BrazeInternalServerError(object):
+    raise Exception('BrazeInternalServerError')
 
 
 class BrazeClient(object):
@@ -32,14 +43,10 @@ class BrazeClient(object):
     USER_TRACK_ENDPOINT = '/users/track'
     USER_DELETE_ENDPOINT = '/users/delete'
 
-    REQUEST_POST = 'post'
-
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
         self.api_url = api_url or self.DEFAULT_API_URL
-        self.requests = requests
         self.request_url = ''
-        self.headers = {}
 
     def user_track(self, attributes, events, purchases):
         """
@@ -62,7 +69,7 @@ class BrazeClient(object):
         if purchases:
             payload['purchases'] = purchases
 
-        return self.__create_request(payload=payload, request_type=self.REQUEST_POST)
+        return self.__create_request(payload=payload)
 
     def user_delete(self, external_ids, appboy_ids):
         """
@@ -81,41 +88,61 @@ class BrazeClient(object):
         if appboy_ids:
             payload['appboy_ids'] = appboy_ids
 
-        return self.__create_request(payload=payload, request_type=self.REQUEST_POST)
+        return self.__create_request(payload=payload)
 
-    def __create_request(self, payload, request_type):
-        self.headers = {
+    @retry(
+        reraise=True,
+        wait=wait_random_exponential(multiplier=1, max=10),
+        stop=stop_after_attempt(3),
+    )
+    def _post_request_with_retries(self, payload):
+        headers = {
             'Content-Type': 'application/json',
         }
+        r = requests.post(
+            self.request_url,
+            data=json.dumps(payload),
+            headers=headers,
+            timeout=2,
+        )
+        # https://www.braze.com/docs/developer_guide/rest_api/messaging/#fatal-errors
+        if r.status_code == 429:
+            raise BrazeRateLimitError
+        elif str(r.status_code).startswith('5'):
+            raise BrazeInternalServerError
+        return r
+
+    def __create_request(self, payload):
 
         payload['api_key'] = self.api_key
 
-        response = {}
-
         try:
-            if request_type == self.REQUEST_POST:
-                r = self.requests.post(self.request_url, data=json.dumps(payload), headers=self.headers)
-                response = r.json()
-                response['status_code'] = r.status_code
-                if response['message'] == 'success' and 'errors' not in response:
-                    response['success'] = True
+            r = self._post_request_with_retries(payload)
+            response = r.json()
+            response['status_code'] = r.status_code
 
-        except RequestException as e:
-            # handle all requests HTTP exceptions
-            response = {'client_error': str(e)}
-        except Exception as e:
-            # handle all exceptions which can be on API side
-            response = {'client_error': (str(e) + '. Response: ' + r.text)}
+            message = response['message']
+            if message == 'success' or message == 'queued':
+                if 'errors' not in response:
+                    response['success'] = True
+                else:
+                    # Non-Fatal errors
+                    pass
+
+        except (
+                RequestException,
+                BrazeRateLimitError,
+                BrazeInternalServerError,
+        ) as e:
+            response = {'errors': str(e)}
 
         if 'success' not in response:
             response['success'] = False
-        if 'errors' not in response:
-            response['errors'] = ''
+
         if 'status_code' not in response:
             response['status_code'] = 0
+
         if 'message' not in response:
             response['message'] = ''
-        if 'client_error' not in response:
-            response['client_error'] = ''
 
         return response
