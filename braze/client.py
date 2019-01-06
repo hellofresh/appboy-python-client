@@ -7,12 +7,12 @@ from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 
 
-class BrazeRateLimitError(object):
-    raise Exception('BrazeRateLimitError')
+class BrazeRateLimitError(Exception):
+    pass
 
 
-class BrazeInternalServerError(object):
-    raise Exception('BrazeInternalServerError')
+class BrazeInternalServerError(Exception):
+    pass
 
 
 class BrazeClient(object):
