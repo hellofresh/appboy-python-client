@@ -1,41 +1,23 @@
+import pytest
+
+from braze.client import BrazeClient
+from braze.client import BrazeInternalServerError
 from requests import RequestException
-
-
-class DummyRequest(object):
-    def __init__(self):
-        self.status_code = 200
-        self.text = 'Some text'
-
-    def post(self, request_url, data, headers):
-        return self
-
-    @staticmethod
-    def json():
-        return {'message': 'success', 'errors': ''}
-
-
-class DummyRequestException(object):
-    def __init__(self):
-        self.status_code = 200
-
-    def post(self, request_url, data, headers):
-        raise RequestException('Something went wrong')
-
-    @staticmethod
-    def json():
-        return {'message': 'success', 'errors': ''}
+from requests_mock import ANY
 
 
 class TestBrazeClient(object):
 
     def test_init(self, braze_client):
         assert braze_client.api_key == 'API_KEY'
-        assert braze_client.requests is not None
         assert braze_client.request_url == ''
-        assert braze_client.headers == {}
 
-    def test_user_track(self, braze_client):
-        braze_client.requests = DummyRequest()
+    def test_user_track(self, braze_client, requests_mock):
+        headers = {
+            'Content-Type': 'application/json',
+        }
+        mock_json = {'message': 'success', 'errors': ''}
+        requests_mock.post(ANY, json=mock_json, status_code=200, headers=headers)
         attributes = {
             'external_id': '123',
             'first_name': 'Firstname',
@@ -57,14 +39,16 @@ class TestBrazeClient(object):
             purchases=purchases,
         )
         assert braze_client.api_url + '/users/track' == braze_client.request_url
-        assert braze_client.headers['Content-Type'] == 'application/json'
         assert response['status_code'] == 200
         assert response['errors'] == ''
-        assert response['client_error'] == ''
         assert response['message'] == 'success'
 
-    def test_user_track_request_exception(self, braze_client):
-        braze_client.requests = DummyRequestException()
+    def test_user_track_request_exception(self, braze_client, mocker):
+        mocker.patch.object(
+            BrazeClient,
+            '_post_request_with_retries',
+            side_effect=RequestException('RequestException Error Message'),
+        )
         attributes = {
             'external_id': '123',
             'first_name': 'Firstname',
@@ -86,8 +70,16 @@ class TestBrazeClient(object):
             purchases=purchases,
         )
         assert braze_client.api_url + '/users/track' == braze_client.request_url
-        assert braze_client.headers['Content-Type'] == 'application/json'
-
         assert response['status_code'] == 0
-        assert response['errors'] == ''
-        assert response['client_error'] == 'Something went wrong'
+        assert response['errors'] == 'RequestException Error Message'
+
+    def test__post_request_with_retries(self, braze_client, mocker):
+        spy = mocker.patch.object(
+            BrazeClient,
+            '_post_request_with_retries',
+            side_effect=BrazeInternalServerError('Error 500'),
+        )
+        with pytest.raises(BrazeInternalServerError):
+            braze_client._post_request_with_retries()
+
+        # TODO
