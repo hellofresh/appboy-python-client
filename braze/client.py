@@ -42,6 +42,7 @@ class BrazeClient(object):
     DEFAULT_API_URL = 'https://rest.iad-02.braze.com'
     USER_TRACK_ENDPOINT = '/users/track'
     USER_DELETE_ENDPOINT = '/users/delete'
+    MAX_RETRIES = 3
 
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
@@ -93,7 +94,7 @@ class BrazeClient(object):
     @retry(
         reraise=True,
         wait=wait_random_exponential(multiplier=1, max=10),
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(MAX_RETRIES),
     )
     def _post_request_with_retries(self, payload):
         headers = {
