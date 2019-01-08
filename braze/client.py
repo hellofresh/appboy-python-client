@@ -1,4 +1,5 @@
 import json
+import time
 
 import requests
 from requests.exceptions import RequestException
@@ -6,7 +7,6 @@ from tenacity import retry
 from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
-import time
 
 
 class BrazeRateLimitError(Exception):
@@ -41,16 +41,17 @@ class BrazeClient(object):
         print r['client_error']
         print r['errors']
     """
-    DEFAULT_API_URL = 'https://rest.iad-02.braze.com'
-    USER_TRACK_ENDPOINT = '/users/track'
-    USER_DELETE_ENDPOINT = '/users/delete'
+
+    DEFAULT_API_URL = "https://rest.iad-02.braze.com"
+    USER_TRACK_ENDPOINT = "/users/track"
+    USER_DELETE_ENDPOINT = "/users/delete"
     MAX_RETRIES = 3
     MAX_WAIT_SECONDS = 5
 
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
         self.api_url = api_url or self.DEFAULT_API_URL
-        self.request_url = ''
+        self.request_url = ""
 
     def user_track(self, attributes, events, purchases):
         """
@@ -65,13 +66,13 @@ class BrazeClient(object):
         payload = {}
 
         if events:
-            payload['events'] = events
+            payload["events"] = events
 
         if attributes:
-            payload['attributes'] = attributes
+            payload["attributes"] = attributes
 
         if purchases:
-            payload['purchases'] = purchases
+            payload["purchases"] = purchases
 
         return self.__create_request(payload=payload)
 
@@ -87,46 +88,42 @@ class BrazeClient(object):
         payload = {}
 
         if external_ids:
-            payload['external_ids'] = external_ids
+            payload["external_ids"] = external_ids
 
         if appboy_ids:
-            payload['appboy_ids'] = appboy_ids
+            payload["appboy_ids"] = appboy_ids
 
         return self.__create_request(payload=payload)
 
     def __create_request(self, payload):
 
-        payload['api_key'] = self.api_key
+        payload["api_key"] = self.api_key
 
-        response = {'errors': []}
+        response = {"errors": []}
         try:
             r = self._post_request_with_retries(payload)
             response.update(r.json())
-            response['status_code'] = r.status_code
+            response["status_code"] = r.status_code
 
-            message = response['message']
-            if message == 'success' or message == 'queued':
-                if not response['errors']:
-                    response['success'] = True
+            message = response["message"]
+            if message == "success" or message == "queued":
+                if not response["errors"]:
+                    response["success"] = True
                 else:
                     # Non-Fatal errors
                     pass
 
-        except (
-                RequestException,
-                BrazeRateLimitError,
-                BrazeInternalServerError,
-        ) as e:
-            response['errors'].append(str(e))
+        except (RequestException, BrazeRateLimitError, BrazeInternalServerError) as e:
+            response["errors"].append(str(e))
 
-        if 'success' not in response:
-            response['success'] = False
+        if "success" not in response:
+            response["success"] = False
 
-        if 'status_code' not in response:
-            response['status_code'] = 0
+        if "status_code" not in response:
+            response["status_code"] = 0
 
-        if 'message' not in response:
-            response['message'] = ''
+        if "message" not in response:
+            response["message"] = ""
 
         return response
 
@@ -145,27 +142,22 @@ class BrazeClient(object):
         :param int retry_attempt: current retry attempt number
         :rtype: dict
         """
-        headers = {
-            'Content-Type': 'application/json',
-        }
+        headers = {"Content-Type": "application/json"}
         r = requests.post(
-            self.request_url,
-            data=json.dumps(payload),
-            headers=headers,
-            timeout=2,
+            self.request_url, data=json.dumps(payload), headers=headers, timeout=2
         )
         if retry_attempt >= self.MAX_RETRIES:
-            raise BrazeRateLimitError('BrazeRateLimitError')
+            raise BrazeRateLimitError("BrazeRateLimitError")
 
         # https://www.braze.com/docs/developer_guide/rest_api/messaging/#fatal-errors
         if r.status_code == 429:
-            reset_epoch_seconds = float(r.headers.get('X-RateLimit-Reset'))
+            reset_epoch_seconds = float(r.headers.get("X-RateLimit-Reset"))
             sec_to_reset = reset_epoch_seconds - float(time.time())
             if sec_to_reset < self.MAX_WAIT_SECONDS:
                 time.sleep(sec_to_reset)
-                return self._post_request_with_retries(payload, retry_attempt+1)
+                return self._post_request_with_retries(payload, retry_attempt + 1)
             else:
-                raise BrazeRateLimitError('BrazeRateLimitError')
-        elif str(r.status_code).startswith('5'):
-            raise BrazeInternalServerError('BrazeInternalServerError')
+                raise BrazeRateLimitError("BrazeRateLimitError")
+        elif str(r.status_code).startswith("5"):
+            raise BrazeInternalServerError("BrazeInternalServerError")
         return r

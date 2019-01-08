@@ -1,0 +1,14 @@
+[tool.black]
+py36 = true
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.tox
+  | \.venv
+  | _build
+  | build
+  | dist
+)/
+'''
