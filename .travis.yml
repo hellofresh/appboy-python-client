@@ -1,0 +1,42 @@
+---
+dist: xenial
+# Travis's Premium VMs are faster and sudo-only
+sudo: required
+
+language: python
+python: 3.6.5
+
+cache:
+  directories:
+    - ~/.cache/pip
+before_cache:
+  - rm -rf ~/.cache/pip/log/
+
+matrix:
+  fast_finish: true
+  include:
+    - name: Unit tests
+      env: TOXENV=py37,test-coverage
+
+    - name: Style checks
+      env: TOXENV=style
+
+    - name: Dependency vulnerability check
+      env: TOXENV=safety
+
+    - name: BlackDuck license compliance check
+      env: NAME=BlackDuck
+      python: 3.7.1
+      install:
+        - pip install -U pip setuptools
+
+install: pip install -U pip tox codecov
+script: tox
+# Always report coverage, even if tests failed (or some tests were not run)
+after_script:
+  - codecov
+
+# In addition to pull requests, always build these branches
+branches:
+  only:
+    - master
