@@ -4,12 +4,12 @@ import requests
 from requests.exceptions import RequestException
 
 
-class AppboyClient(object):
+class BrazeClient(object):
     """
     Client for Appboy public API. Support user_track.
     usage:
-     from appboy.client import AppboyClient
-     client = AppboyClient(app_group_id='Place your app_group_id here')
+     from braze.client import BrazeClient
+     client = BrazeClient(api_key='Place your API key here')
      r = client.user_track(
             attributes=[{
                 'external_id': '1',
@@ -28,15 +28,15 @@ class AppboyClient(object):
         print r['client_error']
         print r['errors']
     """
-    API_URL = 'https://api.appboy.com'
-
+    DEFAULT_API_URL = 'https://rest.iad-02.braze.com'
     USER_TRACK_ENDPOINT = '/users/track'
     USER_DELETE_ENDPOINT = '/users/delete'
 
     REQUEST_POST = 'post'
 
-    def __init__(self, api_key):
+    def __init__(self, api_key, api_url=None):
         self.api_key = api_key
+        self.api_url = api_url or self.DEFAULT_API_URL
         self.requests = requests
         self.request_url = ''
         self.headers = {}
@@ -49,7 +49,7 @@ class AppboyClient(object):
         :param purchases: dict or list of user purchases dict (external_id, app_id, product_id, currency, price)
         :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
         """
-        self.request_url = self.API_URL + self.USER_TRACK_ENDPOINT
+        self.request_url = self.api_url + self.USER_TRACK_ENDPOINT
 
         payload = {}
 
@@ -66,12 +66,12 @@ class AppboyClient(object):
 
     def user_delete(self, external_ids, appboy_ids):
         """
-        Delete user from appboy.
+        Delete user from braze.
         :param external_ids: dict or list of user external ids
-        :param appboy_ids: dict or list of user appboy ids
+        :param appboy_ids: dict or list of user braze ids
         :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
         """
-        self.request_url = self.API_URL + self.USER_DELETE_ENDPOINT
+        self.request_url = self.api_url + self.USER_DELETE_ENDPOINT
 
         payload = {}
 

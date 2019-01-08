@@ -1,15 +1,5 @@
-<p align="center">
-  <a href="https://hellofresh.com">
-    <img width="120" src="https://www.hellofresh.de/images/hellofresh/press/HelloFresh_Logo.png">
-  </a>
-</p>
-
-# appboy-python-client
-A Python client for the Appboy REST API
-
-[ ![Codeship build](https://codeship.com/projects/d92ace70-056d-0134-ffb9-566313bcba78/status?branch=master)](https://codeship.com/projects/154416)
-### Owner
-[Alexander Zhilyaev](mailto:azh@hellofresh.com)
+# braze-client
+A Python client for the Braze REST API
 
 ### How to install
 
@@ -24,9 +14,8 @@ $ python setup.py install
 ### How to use
 
 ```python
-from appboy.client import AppboyClient
-
-client = AppboyClient(api_key='YOUR_API_KEY')
+from braze.client import BrazeClient
+client = BrazeClient(api_key='YOUR_API_KEY')
 
 r = client.user_track(
     attributes=[{
@@ -42,11 +31,11 @@ r = client.user_track(
 )
 if r['success']:
     # do our magic here
-    print 'Success!'
-    print r
+    print('Success!')
+    print(r)
 else:
-    print r['client_error']
-    print r['errors']
+    print(r['client_error'])
+    print(r['errors'])
 
 ```
 For more examples, check `examples.py`.

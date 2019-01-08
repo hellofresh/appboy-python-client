@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-NAME = "appboy-client"
+NAME = "braze-client"
 VERSION = "0.0.1"
 
 REQUIRES = [
@@ -16,9 +16,9 @@ EXTRAS = {
 setup(
     name=NAME,
     version=VERSION,
-    description="Appboy python client",
+    description="Braze Python Client",
     author_email="azh@hellofresh.com",
-    keywords=["HelloFresh", "Appboy"],
+    keywords=["Appboy", "Braze"],
     install_requires=REQUIRES,
     extras_require=EXTRAS,
     packages=find_packages(exclude=('tests',)),

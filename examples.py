@@ -1,6 +1,6 @@
-from appboy.client import AppboyClient
+from braze.client import BrazeClient
 
-client = AppboyClient(api_key='YOUR_API_KEY')
+client = BrazeClient(api_key='YOUR_API_KEY')
 
 # For create - update users
 r = client.user_track(

@@ -1,8 +1,4 @@
-import unittest
-
 from requests import RequestException
-
-from appboy.client import AppboyClient
 
 
 class DummyRequest(object):
@@ -30,18 +26,16 @@ class DummyRequestException(object):
         return {'message': 'success', 'errors': ''}
 
 
-class TestAppboyClient(unittest.TestCase):
-    def setUp(self):
-        self.client = AppboyClient(api_key='API_KEY')
+class TestBrazeClient(object):
 
-    def test_init(self):
-        self.assertEqual(self.client.api_key, 'API_KEY')
-        self.assertIsNotNone(self.client.requests)
-        self.assertEqual(self.client.request_url, '')
-        self.assertEqual(self.client.headers, {})
+    def test_init(self, braze_client):
+        assert braze_client.api_key == 'API_KEY'
+        assert braze_client.requests is not None
+        assert braze_client.request_url == ''
+        assert braze_client.headers == {}
 
-    def test_user_track(self):
-        self.client.requests = DummyRequest()
+    def test_user_track(self, braze_client):
+        braze_client.requests = DummyRequest()
         attributes = {
             'external_id': '123',
             'first_name': 'Firstname',
@@ -57,18 +51,20 @@ class TestAppboyClient(unittest.TestCase):
             'name': 'some_name'
         }
 
-        response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
+        response = braze_client.user_track(
+            attributes=attributes,
+            events=events,
+            purchases=purchases,
+        )
+        assert braze_client.api_url + '/users/track' == braze_client.request_url
+        assert braze_client.headers['Content-Type'] == 'application/json'
+        assert response['status_code'] == 200
+        assert response['errors'] == ''
+        assert response['client_error'] == ''
+        assert response['message'] == 'success'
 
-        self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
-        self.assertEqual(self.client.headers['Content-Type'], 'application/json')
-
-        self.assertEqual(response['status_code'], 200)
-        self.assertEqual(response['errors'], '')
-        self.assertEqual(response['client_error'], '')
-        self.assertEqual(response['message'], 'success')
-
-    def test_user_track_request_exception(self):
-        self.client.requests = DummyRequestException()
+    def test_user_track_request_exception(self, braze_client):
+        braze_client.requests = DummyRequestException()
         attributes = {
             'external_id': '123',
             'first_name': 'Firstname',
@@ -84,11 +80,14 @@ class TestAppboyClient(unittest.TestCase):
             'name': 'some_name'
         }
 
-        response = self.client.user_track(attributes=attributes, events=events, purchases=purchases)
+        response = braze_client.user_track(
+            attributes=attributes,
+            events=events,
+            purchases=purchases,
+        )
+        assert braze_client.api_url + '/users/track' == braze_client.request_url
+        assert braze_client.headers['Content-Type'] == 'application/json'
 
-        self.assertEqual(self.client.API_URL + '/users/track', self.client.request_url)
-        self.assertEqual(self.client.headers['Content-Type'], 'application/json')
-
-        self.assertEqual(response['status_code'], 0)
-        self.assertEqual(response['errors'], '')
-        self.assertEqual(response['client_error'], 'Something went wrong')
+        assert response['status_code'] == 0
+        assert response['errors'] == ''
+        assert response['client_error'] == 'Something went wrong'
