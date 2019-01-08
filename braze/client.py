@@ -3,8 +3,10 @@ import json
 import requests
 from requests.exceptions import RequestException
 from tenacity import retry
+from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
+import time
 
 
 class BrazeRateLimitError(Exception):
@@ -95,6 +97,10 @@ class BrazeClient(object):
         reraise=True,
         wait=wait_random_exponential(multiplier=1, max=10),
         stop=stop_after_attempt(MAX_RETRIES),
+        retry=retry_if_exception_type(
+            retry_if_exception_type(BrazeInternalServerError)
+            | retry_if_exception_type(RequestException)
+        ),
     )
     def _post_request_with_retries(self, payload):
         headers = {
@@ -108,7 +114,9 @@ class BrazeClient(object):
         )
         # https://www.braze.com/docs/developer_guide/rest_api/messaging/#fatal-errors
         if r.status_code == 429:
-            raise BrazeRateLimitError
+            sec_to_reset = int(r.headers.get('X-RateLimit-Reset')) - time.time()
+            time.sleep(sec_to_reset)
+            return self._post_request_with_retries(payload)
         elif str(r.status_code).startswith('5'):
             raise BrazeInternalServerError
         return r
