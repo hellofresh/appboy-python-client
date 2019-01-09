@@ -1,10 +1,8 @@
 ---
 dist: xenial
-# Travis's Premium VMs are faster and sudo-only
-sudo: required
 
 language: python
-python: 3.6.5
+python: 3.7.1
 
 cache:
   directories:
@@ -16,19 +14,13 @@ matrix:
   fast_finish: true
   include:
     - name: Unit tests
-      env: TOXENV=py37,test-coverage
+      env: TOXENV=py37
+
+    - name: Unit tests
+      env: TOXENV=py27
 
     - name: Style checks
       env: TOXENV=style
-
-    - name: Dependency vulnerability check
-      env: TOXENV=safety
-
-    - name: BlackDuck license compliance check
-      env: NAME=BlackDuck
-      python: 3.7.1
-      install:
-        - pip install -U pip setuptools
 
 install: pip install -U pip tox codecov
 script: tox
