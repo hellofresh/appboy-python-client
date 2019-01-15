@@ -46,7 +46,7 @@ class BrazeClient(object):
     USER_TRACK_ENDPOINT = "/users/track"
     USER_DELETE_ENDPOINT = "/users/delete"
     MAX_RETRIES = 3
-    MAX_WAIT_SECONDS = 5
+    MAX_WAIT_SECONDS = 1.25
 
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
