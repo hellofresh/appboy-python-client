@@ -1,7 +1,20 @@
 import json
-import requests
+import time
 
+import requests
 from requests.exceptions import RequestException
+from tenacity import retry
+from tenacity import retry_if_exception_type
+from tenacity import stop_after_attempt
+from tenacity import wait_random_exponential
+
+
+class BrazeRateLimitError(Exception):
+    pass
+
+
+class BrazeInternalServerError(Exception):
+    pass
 
 
 class BrazeClient(object):
@@ -28,18 +41,17 @@ class BrazeClient(object):
         print r['client_error']
         print r['errors']
     """
-    DEFAULT_API_URL = 'https://rest.iad-02.braze.com'
-    USER_TRACK_ENDPOINT = '/users/track'
-    USER_DELETE_ENDPOINT = '/users/delete'
 
-    REQUEST_POST = 'post'
+    DEFAULT_API_URL = "https://rest.iad-02.braze.com"
+    USER_TRACK_ENDPOINT = "/users/track"
+    USER_DELETE_ENDPOINT = "/users/delete"
+    MAX_RETRIES = 3
+    MAX_WAIT_SECONDS = 1.25
 
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
         self.api_url = api_url or self.DEFAULT_API_URL
-        self.requests = requests
-        self.request_url = ''
-        self.headers = {}
+        self.request_url = ""
 
     def user_track(self, attributes, events, purchases):
         """
@@ -54,15 +66,15 @@ class BrazeClient(object):
         payload = {}
 
         if events:
-            payload['events'] = events
+            payload["events"] = events
 
         if attributes:
-            payload['attributes'] = attributes
+            payload["attributes"] = attributes
 
         if purchases:
-            payload['purchases'] = purchases
+            payload["purchases"] = purchases
 
-        return self.__create_request(payload=payload, request_type=self.REQUEST_POST)
+        return self.__create_request(payload=payload)
 
     def user_delete(self, external_ids, appboy_ids):
         """
@@ -76,46 +88,76 @@ class BrazeClient(object):
         payload = {}
 
         if external_ids:
-            payload['external_ids'] = external_ids
+            payload["external_ids"] = external_ids
 
         if appboy_ids:
-            payload['appboy_ids'] = appboy_ids
+            payload["appboy_ids"] = appboy_ids
 
-        return self.__create_request(payload=payload, request_type=self.REQUEST_POST)
+        return self.__create_request(payload=payload)
 
-    def __create_request(self, payload, request_type):
-        self.headers = {
-            'Content-Type': 'application/json',
-        }
+    def __create_request(self, payload):
 
-        payload['api_key'] = self.api_key
+        payload["api_key"] = self.api_key
 
-        response = {}
-
+        response = {"errors": []}
         try:
-            if request_type == self.REQUEST_POST:
-                r = self.requests.post(self.request_url, data=json.dumps(payload), headers=self.headers)
-                response = r.json()
-                response['status_code'] = r.status_code
-                if response['message'] == 'success' and 'errors' not in response:
-                    response['success'] = True
+            r = self._post_request_with_retries(payload)
+            response.update(r.json())
+            response["status_code"] = r.status_code
 
-        except RequestException as e:
-            # handle all requests HTTP exceptions
-            response = {'client_error': str(e)}
-        except Exception as e:
-            # handle all exceptions which can be on API side
-            response = {'client_error': (str(e) + '. Response: ' + r.text)}
+            message = response["message"]
+            if message == "success" or message == "queued":
+                if not response["errors"]:
+                    response["success"] = True
+                else:
+                    # Non-Fatal errors
+                    pass
 
-        if 'success' not in response:
-            response['success'] = False
-        if 'errors' not in response:
-            response['errors'] = ''
-        if 'status_code' not in response:
-            response['status_code'] = 0
-        if 'message' not in response:
-            response['message'] = ''
-        if 'client_error' not in response:
-            response['client_error'] = ''
+        except (RequestException, BrazeRateLimitError, BrazeInternalServerError) as e:
+            response["errors"].append(str(e))
+
+        if "success" not in response:
+            response["success"] = False
+
+        if "status_code" not in response:
+            response["status_code"] = 0
+
+        if "message" not in response:
+            response["message"] = ""
 
         return response
+
+    @retry(
+        reraise=True,
+        wait=wait_random_exponential(multiplier=1, max=MAX_WAIT_SECONDS),
+        stop=stop_after_attempt(MAX_RETRIES),
+        retry=(
+            retry_if_exception_type(BrazeInternalServerError)
+            | retry_if_exception_type(RequestException)
+        ),
+    )
+    def _post_request_with_retries(self, payload, retry_attempt=0):
+        """
+        :param dict payload:
+        :param int retry_attempt: current retry attempt number
+        :rtype: dict
+        """
+        headers = {"Content-Type": "application/json"}
+        r = requests.post(
+            self.request_url, data=json.dumps(payload), headers=headers, timeout=2
+        )
+        if retry_attempt >= self.MAX_RETRIES:
+            raise BrazeRateLimitError("BrazeRateLimitError")
+
+        # https://www.braze.com/docs/developer_guide/rest_api/messaging/#fatal-errors
+        if r.status_code == 429:
+            reset_epoch_seconds = float(r.headers.get("X-RateLimit-Reset"))
+            sec_to_reset = reset_epoch_seconds - float(time.time())
+            if sec_to_reset < self.MAX_WAIT_SECONDS:
+                time.sleep(sec_to_reset)
+                return self._post_request_with_retries(payload, retry_attempt + 1)
+            else:
+                raise BrazeRateLimitError("BrazeRateLimitError")
+        elif str(r.status_code).startswith("5"):
+            raise BrazeInternalServerError("BrazeInternalServerError")
+        return r
