@@ -13,10 +13,10 @@ before_cache:
 matrix:
   fast_finish: true
   include:
-    - name: Unit tests
-      env: TOXENV=py37
+    - name: Python3.7 Tests
+      env: TOXENV=py37, test-coverage
 
-    - name: Unit tests
+    - name: Python2.7 Tests
       env: TOXENV=py27
 
     - name: Style checks

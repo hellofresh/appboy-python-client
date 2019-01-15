@@ -1,0 +1,25 @@
+---
+
+# Configuration for codecov.io
+# When editing this file, please validate its contents using:
+#   curl -X POST --data-binary @- https://codecov.io/validate < codecov.yml
+#
+comment:
+  layout: header, changes, diff
+
+coverage:
+  status:
+    # Pass/fail commits based on whether they increase or decrease coverage to
+    # the entire project.
+    project:
+      default:
+        target: auto
+        threshold: 0.01
+    # Pass/fail commits based on coverage of the lines changes in that
+    # commit/PR. This is NOT the same as the 'project' status.
+    patch:
+      default:
+        target: auto
+    # Don't mark a commit as failing when coverage changes outside the files in
+    # the commit as this is beyond the control of the PR author for existing code.
+    changes: false
