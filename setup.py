@@ -1,18 +1,12 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
 
 NAME = "braze-client"
 VERSION = "0.0.1"
 
-REQUIRES = [
-    'requests==2.21.0',
-    'tenacity==5.0.2',
-]
+REQUIRES = ["requests==2.21.0", "tenacity==5.0.2"]
 
-EXTRAS = {
-    'dev': [
-        'tox',
-    ],
-}
+EXTRAS = {"dev": ["tox"]}
 
 setup(
     name=NAME,
@@ -22,10 +16,10 @@ setup(
     keywords=["Appboy", "Braze"],
     install_requires=REQUIRES,
     extras_require=EXTRAS,
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=("tests",)),
     classifiers=[
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.7',
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.7",
     ],
 )
