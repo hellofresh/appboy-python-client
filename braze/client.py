@@ -25,10 +25,21 @@ class BrazeRateLimitError(Exception):
 
 
 class BrazeClientError(Exception):
+    """
+    Represents any Braze Fatal Error.
+
+    https://www.braze.com/docs/developer_guide/rest_api/user_data/#user-track-responses
+    """
+
     pass
 
 
 class BrazeInternalServerError(BrazeClientError):
+    """
+    Used for Braze API responses where response code is of type 5XX suggesting
+    Braze side server errors.
+    """
+
     pass
 
 
