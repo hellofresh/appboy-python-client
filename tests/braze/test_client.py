@@ -1,8 +1,9 @@
 import time
 
-from braze.client import _wait_random_exp_or_rate_limit, BrazeClientError, \
-    BrazeInternalServerError
+from braze.client import _wait_random_exp_or_rate_limit
 from braze.client import BrazeClient
+from braze.client import BrazeClientError
+from braze.client import BrazeInternalServerError
 from braze.client import BrazeRateLimitError
 from braze.client import MAX_RETRIES
 from braze.client import MAX_WAIT_SECONDS
@@ -95,9 +96,7 @@ class TestBrazeClient(object):
         self, braze_client, mocker, attributes, events, purchases
     ):
         mocker.patch.object(
-            BrazeClient,
-            "_post_request_with_retries",
-            side_effect=RequestException,
+            BrazeClient, "_post_request_with_retries", side_effect=RequestException
         )
 
         with pytest.raises(RequestException):
@@ -109,9 +108,7 @@ class TestBrazeClient(object):
 
     @pytest.mark.parametrize(
         "status_code, retry_attempts, error",
-        [
-            (500, MAX_RETRIES, BrazeInternalServerError),
-            (401, 1, BrazeClientError)]
+        [(500, MAX_RETRIES, BrazeInternalServerError), (401, 1, BrazeClientError)],
     )
     def test_retries_for_errors(
         self,

@@ -1,7 +1,6 @@
 import time
 
 import requests
-from requests.exceptions import RequestException
 from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
