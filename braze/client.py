@@ -22,10 +22,14 @@ class BrazeRateLimitError(Exception):
         :param float reset_epoch_s: Unix timestamp for when the API may be called again.
         """
         self.reset_epoch_s = reset_epoch_s
-        super(BrazeRateLimitError, self).__init__("BrazeRateLimitError")
+        super(BrazeRateLimitError, self).__init__()
 
 
-class BrazeInternalServerError(Exception):
+class BrazeClientError(Exception):
+    pass
+
+
+class BrazeInternalServerError(BrazeClientError):
     pass
 
 
@@ -131,21 +135,21 @@ class BrazeClient(object):
         payload["api_key"] = self.api_key
 
         response = {"errors": []}
-        try:
-            r = self._post_request_with_retries(payload)
-            response.update(r.json())
-            response["status_code"] = r.status_code
+        r = self._post_request_with_retries(payload)
+        response.update(r.json())
+        response["status_code"] = r.status_code
 
-            message = response["message"]
-            if message == "success" or message == "queued":
-                if not response["errors"]:
-                    response["success"] = True
-                else:
-                    # Non-Fatal errors
-                    pass
+        message = response["message"]
+        if message == "success" or message == "queued":
+            if not response["errors"]:
+                response["success"] = True
+            else:
+                # Non-Fatal errors
+                pass
 
-        except (RequestException, BrazeRateLimitError, BrazeInternalServerError) as e:
-            response["errors"].append(str(e))
+        if message != "success":
+            # message contains the fatal error message from Braze
+            raise BrazeClientError(message, response["errors"])
 
         if "success" not in response:
             response["success"] = False
@@ -174,5 +178,5 @@ class BrazeClient(object):
             reset_epoch_s = float(r.headers.get("X-RateLimit-Reset", 0))
             raise BrazeRateLimitError(reset_epoch_s)
         elif str(r.status_code).startswith("5"):
-            raise BrazeInternalServerError("BrazeInternalServerError")
+            raise BrazeInternalServerError
         return r
