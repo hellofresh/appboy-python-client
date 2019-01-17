@@ -6,6 +6,10 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 
+DEFAULT_API_URL = "https://rest.iad-02.braze.com"
+USER_TRACK_ENDPOINT = "/users/track"
+USER_DELETE_ENDPOINT = "/users/delete"
+MAX_RETRIES = 3
 # Max time to wait between API call retries
 MAX_WAIT_SECONDS = 1.25
 
@@ -75,14 +79,9 @@ class BrazeClient(object):
         print r['errors']
     """
 
-    DEFAULT_API_URL = "https://rest.iad-02.braze.com"
-    USER_TRACK_ENDPOINT = "/users/track"
-    USER_DELETE_ENDPOINT = "/users/delete"
-    MAX_RETRIES = 3
-
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
-        self.api_url = api_url or self.DEFAULT_API_URL
+        self.api_url = api_url or DEFAULT_API_URL
         self.request_url = ""
 
     def user_track(self, attributes, events, purchases):
@@ -93,7 +92,7 @@ class BrazeClient(object):
         :param purchases: dict or list of user purchases dict (external_id, app_id, product_id, currency, price)
         :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
         """
-        self.request_url = self.api_url + self.USER_TRACK_ENDPOINT
+        self.request_url = self.api_url + USER_TRACK_ENDPOINT
 
         payload = {}
 
@@ -115,7 +114,7 @@ class BrazeClient(object):
         :param appboy_ids: dict or list of user braze ids
         :return: json dict response, for example: {"message": "success", "errors": [], "client_error": ""}
         """
-        self.request_url = self.api_url + self.USER_DELETE_ENDPOINT
+        self.request_url = self.api_url + USER_DELETE_ENDPOINT
 
         payload = {}
 

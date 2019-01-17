@@ -3,6 +3,7 @@ import time
 from braze.client import _wait_random_exp_or_rate_limit
 from braze.client import BrazeClient
 from braze.client import BrazeRateLimitError
+from braze.client import MAX_RETRIES
 from braze.client import MAX_WAIT_SECONDS
 from freezegun import freeze_time
 import pytest
@@ -106,7 +107,7 @@ class TestBrazeClient(object):
         assert error_msg in response["errors"]
 
     @pytest.mark.parametrize(
-        "status_code, retry_attempts", [(500, BrazeClient.MAX_RETRIES), (401, 1)]
+        "status_code, retry_attempts", [(500, MAX_RETRIES), (401, 1)]
     )
     def test_retries_for_errors(
         self,
@@ -136,7 +137,7 @@ class TestBrazeClient(object):
     @freeze_time()
     @pytest.mark.parametrize(
         "reset_delta_seconds, expected_attempts",
-        [(0.05, BrazeClient.MAX_RETRIES), (MAX_WAIT_SECONDS + 1, 1)],
+        [(0.05, MAX_RETRIES), (MAX_WAIT_SECONDS + 1, 1)],
     )
     def test_retries_for_rate_limit_errors(
         self,
