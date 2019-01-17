@@ -1,20 +1,53 @@
-import json
 import time
 
 import requests
 from requests.exceptions import RequestException
 from tenacity import retry
-from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 
+# Max time to wait between API call retries
+MAX_WAIT_SECONDS = 1.25
+
 
 class BrazeRateLimitError(Exception):
-    pass
+    def __init__(self, reset_epoch_s):
+        """
+        A rate limit error was encountered.
+
+        :param float reset_epoch_s: Unix timestamp for when the API may be called again.
+        """
+        self.reset_epoch_s = reset_epoch_s
+        super(BrazeRateLimitError, self).__init__("BrazeRateLimitError")
 
 
 class BrazeInternalServerError(Exception):
     pass
+
+
+def _wait_random_exp_or_rate_limit():
+    """Creates a tenacity wait callback that accounts for explicit rate limits."""
+    random_exp = wait_random_exponential(multiplier=1, max=MAX_WAIT_SECONDS)
+
+    def check(retry_state):
+        """
+        Waits with either a random exponential backoff or attempts to obey rate limits
+        that Braze returns.
+
+        :param tenacity.RetryCallState retry_state: Info about current retry invocation
+        :raises BrazeRateLimitError: If the rate limit reset time is too long
+        :returns: Time to wait, in seconds.
+        :rtype: float
+        """
+        exc = retry_state.outcome.exception()
+        if isinstance(exc, BrazeRateLimitError):
+            sec_to_reset = exc.reset_epoch_s - float(time.time())
+            if sec_to_reset >= MAX_WAIT_SECONDS:
+                raise exc
+            return max(0.0, sec_to_reset)
+        return random_exp(retry_state=retry_state)
+
+    return check
 
 
 class BrazeClient(object):
@@ -46,7 +79,6 @@ class BrazeClient(object):
     USER_TRACK_ENDPOINT = "/users/track"
     USER_DELETE_ENDPOINT = "/users/delete"
     MAX_RETRIES = 3
-    MAX_WAIT_SECONDS = 1.25
 
     def __init__(self, api_key, api_url=None):
         self.api_key = api_key
@@ -129,35 +161,19 @@ class BrazeClient(object):
 
     @retry(
         reraise=True,
-        wait=wait_random_exponential(multiplier=1, max=MAX_WAIT_SECONDS),
+        wait=_wait_random_exp_or_rate_limit(),
         stop=stop_after_attempt(MAX_RETRIES),
-        retry=(
-            retry_if_exception_type(BrazeInternalServerError)
-            | retry_if_exception_type(RequestException)
-        ),
     )
-    def _post_request_with_retries(self, payload, retry_attempt=0):
+    def _post_request_with_retries(self, payload):
         """
         :param dict payload:
-        :param int retry_attempt: current retry attempt number
-        :rtype: dict
+        :rtype: requests.Response
         """
-        headers = {"Content-Type": "application/json"}
-        r = requests.post(
-            self.request_url, data=json.dumps(payload), headers=headers, timeout=2
-        )
-        if retry_attempt >= self.MAX_RETRIES:
-            raise BrazeRateLimitError("BrazeRateLimitError")
-
+        r = requests.post(self.request_url, json=payload, timeout=2)
         # https://www.braze.com/docs/developer_guide/rest_api/messaging/#fatal-errors
         if r.status_code == 429:
-            reset_epoch_seconds = float(r.headers.get("X-RateLimit-Reset"))
-            sec_to_reset = reset_epoch_seconds - float(time.time())
-            if sec_to_reset < self.MAX_WAIT_SECONDS:
-                time.sleep(sec_to_reset)
-                return self._post_request_with_retries(payload, retry_attempt + 1)
-            else:
-                raise BrazeRateLimitError("BrazeRateLimitError")
+            reset_epoch_s = float(r.headers.get("X-RateLimit-Reset", 0))
+            raise BrazeRateLimitError(reset_epoch_s)
         elif str(r.status_code).startswith("5"):
             raise BrazeInternalServerError("BrazeInternalServerError")
         return r
