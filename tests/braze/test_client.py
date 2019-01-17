@@ -7,6 +7,7 @@ from braze.client import MAX_RETRIES
 from braze.client import MAX_WAIT_SECONDS
 from freezegun import freeze_time
 import pytest
+from pytest import approx
 from requests import RequestException
 from requests_mock import ANY
 from tenacity import Future
@@ -148,6 +149,7 @@ class TestBrazeClient(object):
         purchases,
         reset_delta_seconds,
         expected_attempts,
+        no_sleep,
     ):
         headers = {
             "Content-Type": "application/json",
@@ -165,3 +167,7 @@ class TestBrazeClient(object):
         assert stats["attempt_number"] == expected_attempts
         assert response["success"] is False
         assert "BrazeRateLimitError" in response["errors"]
+
+        # Ensure the correct wait time is used when rate limited
+        for i in range(expected_attempts - 1):
+            assert approx(no_sleep.call_args_list[i][0], reset_delta_seconds)
