@@ -150,19 +150,13 @@ class BrazeClient(object):
         response["status_code"] = r.status_code
 
         message = response["message"]
-        if message == "success" or message == "queued":
-            if not response["errors"]:
-                response["success"] = True
-            else:
-                # Non-Fatal errors
-                pass
+        response["success"] = (
+            message in ("success", "queued") and not response["errors"]
+        )
 
         if message != "success":
             # message contains the fatal error message from Braze
             raise BrazeClientError(message, response["errors"])
-
-        if "success" not in response:
-            response["success"] = False
 
         if "status_code" not in response:
             response["status_code"] = 0
