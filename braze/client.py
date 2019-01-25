@@ -1,7 +1,6 @@
 import time
 
 import requests
-from requests.exceptions import RequestException
 from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
@@ -22,10 +21,25 @@ class BrazeRateLimitError(Exception):
         :param float reset_epoch_s: Unix timestamp for when the API may be called again.
         """
         self.reset_epoch_s = reset_epoch_s
-        super(BrazeRateLimitError, self).__init__("BrazeRateLimitError")
+        super(BrazeRateLimitError, self).__init__()
 
 
-class BrazeInternalServerError(Exception):
+class BrazeClientError(Exception):
+    """
+    Represents any Braze Fatal Error.
+
+    https://www.braze.com/docs/developer_guide/rest_api/user_data/#user-track-responses
+    """
+
+    pass
+
+
+class BrazeInternalServerError(BrazeClientError):
+    """
+    Used for Braze API responses where response code is of type 5XX suggesting
+    Braze side server errors.
+    """
+
     pass
 
 
@@ -131,24 +145,18 @@ class BrazeClient(object):
         payload["api_key"] = self.api_key
 
         response = {"errors": []}
-        try:
-            r = self._post_request_with_retries(payload)
-            response.update(r.json())
-            response["status_code"] = r.status_code
+        r = self._post_request_with_retries(payload)
+        response.update(r.json())
+        response["status_code"] = r.status_code
 
-            message = response["message"]
-            if message == "success" or message == "queued":
-                if not response["errors"]:
-                    response["success"] = True
-                else:
-                    # Non-Fatal errors
-                    pass
+        message = response["message"]
+        response["success"] = (
+            message in ("success", "queued") and not response["errors"]
+        )
 
-        except (RequestException, BrazeRateLimitError, BrazeInternalServerError) as e:
-            response["errors"].append(str(e))
-
-        if "success" not in response:
-            response["success"] = False
+        if message != "success":
+            # message contains the fatal error message from Braze
+            raise BrazeClientError(message, response["errors"])
 
         if "status_code" not in response:
             response["status_code"] = 0
@@ -174,5 +182,5 @@ class BrazeClient(object):
             reset_epoch_s = float(r.headers.get("X-RateLimit-Reset", 0))
             raise BrazeRateLimitError(reset_epoch_s)
         elif str(r.status_code).startswith("5"):
-            raise BrazeInternalServerError("BrazeInternalServerError")
+            raise BrazeInternalServerError
         return r

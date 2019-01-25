@@ -2,6 +2,8 @@ import time
 
 from braze.client import _wait_random_exp_or_rate_limit
 from braze.client import BrazeClient
+from braze.client import BrazeClientError
+from braze.client import BrazeInternalServerError
 from braze.client import BrazeRateLimitError
 from braze.client import MAX_RETRIES
 from braze.client import MAX_WAIT_SECONDS
@@ -93,22 +95,20 @@ class TestBrazeClient(object):
     def test_user_track_request_exception(
         self, braze_client, mocker, attributes, events, purchases
     ):
-        error_msg = "RequestException Error Message"
         mocker.patch.object(
-            BrazeClient,
-            "_post_request_with_retries",
-            side_effect=RequestException(error_msg),
+            BrazeClient, "_post_request_with_retries", side_effect=RequestException
         )
 
-        response = braze_client.user_track(
-            attributes=attributes, events=events, purchases=purchases
-        )
+        with pytest.raises(RequestException):
+            braze_client.user_track(
+                attributes=attributes, events=events, purchases=purchases
+            )
+
         assert braze_client.api_url + "/users/track" == braze_client.request_url
-        assert response["status_code"] == 0
-        assert error_msg in response["errors"]
 
     @pytest.mark.parametrize(
-        "status_code, retry_attempts", [(500, MAX_RETRIES), (401, 1)]
+        "status_code, retry_attempts, error",
+        [(500, MAX_RETRIES, BrazeInternalServerError), (401, 1, BrazeClientError)],
     )
     def test_retries_for_errors(
         self,
@@ -119,6 +119,7 @@ class TestBrazeClient(object):
         attributes,
         events,
         purchases,
+        error,
     ):
         headers = {"Content-Type": "application/json"}
         error_msg = "Internal Server Error"
@@ -127,13 +128,13 @@ class TestBrazeClient(object):
             ANY, json=mock_json, status_code=status_code, headers=headers
         )
 
-        response = braze_client.user_track(
-            attributes=attributes, events=events, purchases=purchases
-        )
+        with pytest.raises(error):
+            braze_client.user_track(
+                attributes=attributes, events=events, purchases=purchases
+            )
 
         stats = braze_client._post_request_with_retries.retry.statistics
         assert stats["attempt_number"] == retry_attempts
-        assert response["success"] is False
 
     @freeze_time()
     @pytest.mark.parametrize(
@@ -159,14 +160,13 @@ class TestBrazeClient(object):
         mock_json = {"message": error_msg, "errors": error_msg}
         requests_mock.post(ANY, json=mock_json, status_code=429, headers=headers)
 
-        response = braze_client.user_track(
-            attributes=attributes, events=events, purchases=purchases
-        )
+        with pytest.raises(BrazeRateLimitError):
+            braze_client.user_track(
+                attributes=attributes, events=events, purchases=purchases
+            )
 
         stats = braze_client._post_request_with_retries.retry.statistics
         assert stats["attempt_number"] == expected_attempts
-        assert response["success"] is False
-        assert "BrazeRateLimitError" in response["errors"]
 
         # Ensure the correct wait time is used when rate limited
         for i in range(expected_attempts - 1):
