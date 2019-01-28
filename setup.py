@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 NAME = "braze-client"
-VERSION = "2.1.0"
+VERSION = "2.2.0"
 
 REQUIRES = ["requests >=2.21.0, <3.0.0", "tenacity >=5.0.0, <6.0.0"]
 
