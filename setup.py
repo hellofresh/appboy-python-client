@@ -4,7 +4,7 @@ NAME = "appboy-client"
 VERSION = "0.0.1"
 
 REQUIRES = [
-    'requests==2.21.0',
+    'requests==2.22.0',
 ]
 
 EXTRAS = {
