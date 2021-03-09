@@ -9,8 +9,8 @@
 
 contact: squad-comms-tech@hellofresh.com
 known-name: appboy-python-client
-squad: crm-data
-tribe: data-management
+squad: commstech
+tribe: adtech
 concourse-team: data-management.crm-data
 slack-channel: "#squad-comms-tech"
 jira_board: CMT
