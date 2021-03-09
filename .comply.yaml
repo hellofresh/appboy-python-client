@@ -13,6 +13,7 @@ squad: crm-data
 tribe: data-management
 concourse-team: data-management.crm-data
 slack-channel: "#squad-crm-data"
+jira-project: ADT
 
 docs:
 - https://github.com/hellofresh/appboy-python-client
