@@ -13,7 +13,7 @@ squad: commstech
 tribe: adtech
 concourse-team: data-management.crm-data
 slack-channel: "#squad-comms-tech"
-jira_board: CMT
+jira-project: CMT
 
 docs:
 - https://github.com/hellofresh/appboy-python-client
