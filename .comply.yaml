@@ -7,12 +7,13 @@
 # description: |
 #   Enter here a brief and useful information about this code base
 
-contact: squad-crm-data@hellofresh.com
+contact: squad-comms-tech@hellofresh.com
 known-name: appboy-python-client
-squad: crm-data
-tribe: data-management
+squad: commstech
+tribe: adtech
 concourse-team: data-management.crm-data
-slack-channel: "#squad-crm-data"
+slack-channel: "#squad-comms-tech"
+jira-project: CMT
 
 docs:
 - https://github.com/hellofresh/appboy-python-client
