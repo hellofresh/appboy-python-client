@@ -12,7 +12,7 @@ known-name: appboy-python-client
 squad: crm-data
 tribe: data-management
 concourse-team: data-management.crm-data
-slack-channel: "#squad-crm-data"
+slack-channel: "#tribe-adtech"
 jira-project: ADT
 
 docs:
